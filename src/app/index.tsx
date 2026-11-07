@@ -1,98 +1,65 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+// Login: the typed name becomes the RevenueCat customer ID. After login the plans are shown
+// first (demo flow: login -> tiers -> choose Free -> create).
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Button, Header, s } from '@/components/ui';
+import { useT } from '@/lib/i18n';
+import { login } from '@/lib/session';
+import { C, F } from '@/lib/theme';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
+export default function Login() {
+  const { t } = useT();
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function go() {
+    if (name.trim().length < 2) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await login(name);
+      router.replace('/create');
+      router.push({ pathname: '/paywall', params: { onboarding: '1' } });
+    } catch {
+      setErr(t.network);
+    } finally {
+      setBusy(false);
+    }
   }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.void }}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <View style={{ flex: 1, padding: 16, maxWidth: 520, width: '100%', alignSelf: 'center' }}>
+          <Header />
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <Text style={[s.h1, { fontSize: 34, lineHeight: 40 }]}>{t.tagline}</Text>
+            <Text style={[s.hint, { marginTop: 10, marginBottom: 32 }]}>{t.loginHint}</Text>
+            <Text style={[s.h2, { fontSize: 16 }]}>{t.loginTitle}</Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              onSubmitEditing={go}
+              placeholder="A Lab Study Club"
+              placeholderTextColor={C.dust}
+              autoCapitalize="words"
+              autoCorrect={false}
+              maxLength={60}
+              style={{
+                fontFamily: F.body, fontSize: 17, color: C.star, backgroundColor: C.deep, borderColor: C.line,
+                borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 14,
+              }}
+            />
+            <Button label={t.loginCta} onPress={go} busy={busy} disabled={name.trim().length < 2} />
+            {err && <Text style={s.error}>{err}</Text>}
+          </View>
+          <Text style={[s.mono, { textAlign: 'center', marginBottom: 8 }]}>{t.poweredBy.toUpperCase()}</Text>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
-
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});
