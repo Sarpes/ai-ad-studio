@@ -68,6 +68,11 @@ export const RULES =
   'Do not add any text, letters, claims, badges or logos. Do not add health, performance or price claims. ' +
   'Photorealistic commercial advertising photograph, the product is the hero and sharply in focus, vertical 9:16 composition.';
 
+// Editable by the user before sending (shown in the app); the product-protection rules are always appended.
+export const DEFAULT_MOTION =
+  'Slow cinematic camera push-in around the product, gentle light movement in the scene, smooth premium commercial motion.';
+export const VIDEO_RULES = 'The product packaging, logo and label stay exactly the same. No text appears.';
+
 export function imagePrompt(scene: string): string {
   return `Place this exact product into a new advertising scene: ${scene}. ${RULES}`;
 }

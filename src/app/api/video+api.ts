@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { makeVideo } from '@/server/fal';
 import { fail, parse, UserBody } from '@/server/http';
+import { DEFAULT_MOTION, VIDEO_RULES } from '@/lib/universes';
 import { assertCanAfford, charge, cleanSource, OutOfCredits, remember, resolveTier } from '@/server/ledger';
 
 const Body = UserBody.extend({
@@ -11,11 +12,8 @@ const Body = UserBody.extend({
   length: z.enum(['short', 'premium']),
   universe: z.string(),
   headline: z.string().max(80).default(''),
+  motion: z.string().trim().min(3).max(1200).optional(), // user-edited "what happens in the video"
 });
-
-const MOTION =
-  'Slow cinematic camera push-in around the product, gentle light movement in the scene, smooth premium commercial motion. ' +
-  'The product packaging, logo and label stay exactly the same. No text appears.';
 
 export async function POST(req: Request) {
   try {
@@ -27,7 +25,8 @@ export async function POST(req: Request) {
     await assertCanAfford(b.userId, tier, cost, 'video');
 
     // Paid users get a clean video even from an image they made while on Free (no watermark baked in).
-    const url = await makeVideo(cleanSource(b.userId, b.imageUrl), MOTION, b.length === 'premium' ? '10' : '5');
+    const prompt = `${b.motion ?? DEFAULT_MOTION} ${VIDEO_RULES}`;
+    const url = await makeVideo(cleanSource(b.userId, b.imageUrl), prompt, b.length === 'premium' ? '10' : '5');
     await charge(b.userId, tier, cost);
     remember(b.userId, [
       { kind: 'video', url, universe: b.universe, headline: b.headline, createdAt: new Date().toISOString() },

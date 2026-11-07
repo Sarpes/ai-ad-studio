@@ -12,7 +12,7 @@ import { useT } from '@/lib/i18n';
 import { pickPhoto, saveMedia, type Photo } from '@/lib/media';
 import { api, ApiError, logout, refresh, useSession } from '@/lib/session';
 import { C, F } from '@/lib/theme';
-import { universe, UNIVERSES, type UniverseId } from '@/lib/universes';
+import { DEFAULT_MOTION, universe, UNIVERSES, type UniverseId } from '@/lib/universes';
 
 type Mode = 'director' | 'choose' | 'idea';
 type Idea = { universe: UniverseId; scene: string; headline: string; caption: string };
@@ -31,6 +31,7 @@ export default function Create() {
   const [mode, setMode] = useState<Mode>('director');
   const [picks, setPicks] = useState<UniverseId[]>([]);
   const [count, setCount] = useState(3); // universes for Director / Write-my-idea (1-3)
+  const [motion, setMotion] = useState(DEFAULT_MOTION); // editable video prompt
   const [idea, setIdea] = useState('');
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
@@ -121,7 +122,10 @@ export default function Create() {
     setErr(null);
     setVideoBusy(length);
     try {
-      const r = await api<{ url: string }>('/api/video', { imageUrl: c.url, length, universe: c.universe, headline: c.headline });
+      const r = await api<{ url: string }>('/api/video', {
+        imageUrl: c.url, length, universe: c.universe, headline: c.headline,
+        motion: motion.trim().length >= 3 ? motion.trim() : undefined,
+      });
       setVideo(r.url);
     } catch (e) {
       explain(e);
@@ -230,6 +234,10 @@ export default function Create() {
                 <Text style={s.mono}>{t.caption.toUpperCase()}</Text>
                 <TextInput value={i.caption} onChangeText={(v) => setIdeas(ideas.map((x, j) => (j === k ? { ...x, caption: v } : x)))}
                   style={[input, { minHeight: 76 }]} maxLength={240} multiline />
+                <Text style={[s.mono, { marginTop: 10, color: C.lilac }]}>{t.promptLabel.toUpperCase()}</Text>
+                <TextInput value={i.scene} onChangeText={(v) => setIdeas(ideas.map((x, j) => (j === k ? { ...x, scene: v } : x)))}
+                  style={[input, { minHeight: 96 }]} maxLength={800} multiline />
+                <Text style={[s.mono, { marginTop: 6 }]}>{t.rulesNote}</Text>
               </View>
             ))}
             <Button label={`${crossover ? t.startCrossover : t.openMultiverse} · ${cost}`} onPress={generate} />
@@ -276,7 +284,10 @@ export default function Create() {
                   <Button label={t.beforeAfter} kind="ghost" onPress={() => setCompare(!compare)} style={{ flex: 1 }} />
                 </View>
 
-                <Section title={t.makeMove}>
+                <Section title={t.makeMove} hint={t.motionHint}>
+                  <TextInput value={motion} onChangeText={setMotion} style={[input, { minHeight: 96, marginTop: 0, marginBottom: 6 }]}
+                    maxLength={1200} multiline />
+                  <Text style={[s.mono, { marginBottom: 12 }]}>{t.rulesNote}</Text>
                   <Button label={t.videoShort} kind="secondary" busy={videoBusy === 'short'} disabled={videoBusy !== null}
                     onPress={() => makeVideo('short')} style={{ marginBottom: 8 }} />
                   <Button label={t.videoPremium} kind="secondary" busy={videoBusy === 'premium'} disabled={videoBusy !== null}
