@@ -15,13 +15,13 @@ const Idea = z.object({
   caption: z.string().max(240),
 });
 
-const Body = UserBody.extend({ photo: PhotoBody, ideas: z.array(Idea).length(3) });
+const Body = UserBody.extend({ photo: PhotoBody, ideas: z.array(Idea).min(1).max(3) });
 
 export async function POST(req: Request) {
   try {
     const b = await parse(req, Body);
     const tier = await resolveTier(b.userId, b.tier);
-    await assertCanAfford(b.userId, tier, 3, 'image');
+    await assertCanAfford(b.userId, tier, b.ideas.length, 'image'); // 1 credit per universe
 
     const productUrl = await upload(decodeB64(b.photo.b64), b.photo.mime);
     const results = await Promise.allSettled(

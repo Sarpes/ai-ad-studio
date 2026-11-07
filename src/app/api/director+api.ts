@@ -14,16 +14,17 @@ const Body = z.object({
   idea: z.string().max(300).optional(),
   product: z.string().max(120).optional(), // short description the user typed, optional
   crossover: z.boolean().default(false),
+  count: z.number().int().min(1).max(3).default(3), // how many universes (1-3)
 });
 
 export type Idea = { universe: UniverseId; scene: string; headline: string; caption: string };
 
-function pickUniverses(mode: string, picks?: string[]): UniverseId[] {
+function pickUniverses(mode: string, count: number, picks?: string[]): UniverseId[] {
   if (mode === 'choose') {
-    if (!picks || picks.length !== 3) throw new BadRequest('Pick exactly 3 universes.');
+    if (!picks || picks.length < 1 || picks.length > 3) throw new BadRequest('Pick 1 to 3 universes.');
     return picks as UniverseId[];
   }
-  return ['luxe', 'neon', 'wild']; // default trio; the LLM may replace them in director mode
+  return (['luxe', 'neon', 'wild'] as UniverseId[]).slice(0, count); // default; the LLM may replace them
 }
 
 function template(u: UniverseId, lang: 'en' | 'tr', product: string, idea?: string): Idea {
@@ -58,33 +59,35 @@ export async function POST(req: Request) {
       return Response.json({ ideas: [template('glow', b.lang, b.product ?? '')], source: 'template' });
     }
 
-    let slots = pickUniverses(b.mode, b.picks);
+    let slots = pickUniverses(b.mode, b.count, b.picks);
+    const n = slots.length;
     const langName = b.lang === 'tr' ? 'Turkish' : 'English';
     const catalog = UNIVERSES.map((u) => `${u.id}: ${u.mood.en}; scene: ${u.scene}`).join('\n');
     const ask =
       `Universes:\n${catalog}\n\nProduct: ${b.product || 'unknown, judge from typical small-brand products'}.\n` +
       (b.mode === 'director'
-        ? 'Choose the 3 universes that fit this product best.'
+        ? `Choose the ${n} universe(s) that fit this product best.`
         : b.mode === 'choose'
           ? `Use exactly these universes in this order: ${slots.join(', ')}.`
-          : `Slot 1 is a custom universe built from the user's idea: "${b.idea}". Choose 2 more universes that fit.`) +
-      `\nReturn JSON: {"ideas":[{"universe":"<id or custom>","scene":"<English scene description, 1 sentence, visual only, no text in image>","headline":"<${langName}>","caption":"<${langName}>"}]} with exactly 3 items.`;
+          : `Slot 1 is a custom universe built from the user's idea: "${b.idea}".` +
+            (n > 1 ? ` Choose ${n - 1} more universe(s) that fit.` : '')) +
+      `\nReturn JSON: {"ideas":[{"universe":"<id or custom>","scene":"<English scene description, 1 sentence, visual only, no text in image>","headline":"<${langName}>","caption":"<${langName}>"}]} with exactly ${n} item(s).`;
 
     try {
       const raw = await llm(SYSTEM, ask);
       const json = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1));
-      const ideas = (json.ideas as Idea[]).slice(0, 3).map((i, k) => {
+      const ideas = (json.ideas as Idea[]).slice(0, n).map((i, k) => {
         const id = (['luxe', 'neon', 'wild', 'pulse', 'glow', 'cozy', 'custom'].includes(i.universe)
           ? i.universe
           : slots[k]) as UniverseId;
         const scene = id === 'custom' ? `${b.idea}. ${i.scene ?? ''}` : `${universe(id).scene}. ${i.scene ?? ''}`;
         return { universe: id, scene, headline: String(i.headline ?? ''), caption: String(i.caption ?? '') };
       });
-      if (ideas.length !== 3) throw new Error('LLM returned wrong count');
+      if (ideas.length !== n) throw new Error('LLM returned wrong count');
       return Response.json({ ideas, source: 'director' });
     } catch (e) {
       console.warn('[director] LLM fallback:', (e as Error).message);
-      if (b.mode === 'idea') slots = ['custom', 'luxe', 'neon'];
+      if (b.mode === 'idea') slots = (['custom', 'luxe', 'neon'] as UniverseId[]).slice(0, n);
       const ideas = slots.map((u) => template(u, b.lang, b.product ?? '', b.idea));
       return Response.json({ ideas, source: 'template' });
     }

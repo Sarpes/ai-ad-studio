@@ -30,6 +30,7 @@ export default function Create() {
   const [consent, setConsent] = useState(false);
   const [mode, setMode] = useState<Mode>('director');
   const [picks, setPicks] = useState<UniverseId[]>([]);
+  const [count, setCount] = useState(3); // universes for Director / Write-my-idea (1-3)
   const [idea, setIdea] = useState('');
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
@@ -73,12 +74,12 @@ export default function Create() {
     setErr(null);
     if (!product) return setErr(t.needsPhoto);
     if (crossover && (!person || !consent)) return setErr(!person ? t.crossoverHint : t.needsConsent);
-    if (!crossover && mode === 'choose' && picks.length !== 3) return setErr(t.needsThree);
+    if (!crossover && mode === 'choose' && (picks.length < 1 || picks.length > 3)) return setErr(t.needsThree);
     if (!crossover && mode === 'idea' && idea.trim().length < 3) return setErr(t.needsIdea);
     setBusy(true);
     try {
       const r = await api<{ ideas: Idea[] }>('/api/director', {
-        mode, picks: mode === 'choose' ? picks : undefined, idea, product: what, crossover,
+        mode, picks: mode === 'choose' ? picks : undefined, idea, product: what, crossover, count,
       });
       setIdeas(r.ideas);
       setStep('preview');
@@ -135,7 +136,7 @@ export default function Create() {
     setNote(r === 'saved' ? t.saved : t.openedSave);
   }
 
-  const cost = crossover ? t.costCrossover : t.costMultiverse;
+  const cost = crossover ? t.costCrossover : t.costN(ideas.length);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.void }}>
@@ -188,6 +189,16 @@ export default function Create() {
                         <Chip key={u.id} label={u.name} color={u.color} on={picks.includes(u.id)}
                           onPress={() => setPicks(picks.includes(u.id) ? picks.filter((p) => p !== u.id)
                             : picks.length < 3 ? [...picks, u.id] : picks)} />
+                      ))}
+                    </View>
+                  </>
+                )}
+                {mode !== 'choose' && (
+                  <>
+                    <Text style={[s.mono, { marginTop: 14, marginBottom: 8 }]}>{t.howMany.toUpperCase()}</Text>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      {[1, 2, 3].map((n) => (
+                        <Chip key={n} label={String(n)} on={count === n} onPress={() => setCount(n)} />
                       ))}
                     </View>
                   </>
