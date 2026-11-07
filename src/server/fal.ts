@@ -2,7 +2,24 @@
 import { fal } from '@fal-ai/client';
 import sharp from 'sharp';
 
-export const IMAGE_MODEL = process.env.FAL_IMAGE_MODEL ?? 'fal-ai/nano-banana/edit';
+// Images: OpenAI GPT Image 2.6 Sunburst (edit) — team decision 7 Nov. Nano Banana selectable via FAL_IMAGE_MODEL.
+export const IMAGE_MODEL = process.env.FAL_IMAGE_MODEL ?? 'openai/gpt-image-2.6/sunburst/edit';
+
+// Input shapes differ: Sunburst sizes with image_size, Nano Banana with aspect_ratio.
+function imageInput(prompt: string, imageUrls: string[]) {
+  if (IMAGE_MODEL.startsWith('openai/gpt-image')) {
+    return {
+      prompt,
+      image_urls: imageUrls,
+      num_images: 1,
+      image_size: 'portrait_16_9', // vertical 9:16, brand kit default
+      quality: 'high',
+      reasoning_effort: 'low', // our images carry no text; low planning keeps stage latency down
+      output_format: 'jpeg',
+    };
+  }
+  return { prompt, image_urls: imageUrls, num_images: 1, output_format: 'jpeg', aspect_ratio: '9:16' };
+}
 // Video: MiniMax H3 Max (team decision, 7 Nov). $0.035/s, any length up to 15 s, image as first frame.
 export const VIDEO_MODEL = process.env.FAL_VIDEO_MODEL ?? 'minimax/h3-max/image-to-video';
 export const LLM_MODEL = 'fal-ai/any-llm';
@@ -33,9 +50,7 @@ export async function editImage(prompt: string, imageUrls: string[], attempts = 
   for (let i = 0; i < attempts; i++) {
     try {
       ensureFal();
-      const r = await fal.subscribe(IMAGE_MODEL, {
-        input: { prompt, image_urls: imageUrls, num_images: 1, output_format: 'jpeg', aspect_ratio: '9:16' },
-      });
+      const r = await fal.subscribe(IMAGE_MODEL, { input: imageInput(prompt, imageUrls) });
       const url = (r.data as { images?: { url: string }[] })?.images?.[0]?.url;
       if (url) return url;
       last = new Error('No image returned');
