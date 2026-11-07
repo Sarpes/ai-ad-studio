@@ -3,7 +3,7 @@
 import { z } from 'zod';
 
 import { fail, parse, UserBody } from '@/server/http';
-import { addLocalCredits, getAccount, resolveTier } from '@/server/ledger';
+import { addLocalCredits, getAccount, insecureDemo, resolveTier } from '@/server/ledger';
 import * as rc from '@/server/revenuecat';
 
 const Body = UserBody.extend({ topup: z.boolean().optional() });
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   try {
     const b = await parse(req, Body);
     const tier = await resolveTier(b.userId, b.tier);
-    if (b.topup && !rc.enabled()) addLocalCredits(b.userId, 10);
+    if (b.topup && !rc.enabled() && insecureDemo()) addLocalCredits(b.userId, 10);
     return Response.json({ ...(await getAccount(b.userId, tier)), verified: rc.enabled() });
   } catch (e) {
     return fail(e);

@@ -71,9 +71,14 @@ function freeState(a: Account) {
 }
 
 /** Resolve the tier: RevenueCat entitlements when the secret key is set, else the app's claim. */
+// Fail closed: with RevenueCat verification on, an unverifiable tier is 'free'. Trusting the app's claim
+// (and the local top-up grant) is only allowed behind ALLOW_INSECURE_DEMO=1 (DECISIONS.md D5).
+export const insecureDemo = () => process.env.ALLOW_INSECURE_DEMO === '1';
+
 export async function resolveTier(userId: string, claimed: Tier): Promise<Tier> {
   const verified = await rc.activeTier(userId);
-  return verified ?? claimed;
+  if (verified) return verified;
+  return !rc.enabled() && insecureDemo() ? claimed : 'free';
 }
 
 async function paidBalance(userId: string, a: Account): Promise<number> {
@@ -85,7 +90,7 @@ export async function getAccount(userId: string, tier: Tier) {
   const db = load();
   const a = account(db, userId);
   // Fallback grant (only used when RevenueCat VC is not reachable): first time we see a paid tier.
-  if (tier !== 'free' && !a.grantedTiers.includes(tier) && !rc.enabled()) {
+  if (tier !== 'free' && !a.grantedTiers.includes(tier) && !rc.enabled() && insecureDemo()) {
     a.localCredits += TIER_GRANT[tier];
     a.grantedTiers.push(tier);
   }
