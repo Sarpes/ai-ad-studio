@@ -39,6 +39,7 @@ export default function Create() {
   const [compare, setCompare] = useState(false);
   const [video, setVideo] = useState<string | null>(null);
   const [videoBusy, setVideoBusy] = useState<'short' | 'premium' | null>(null);
+  const [replay, setReplay] = useState<string | null>(null); // a recent video chosen for playback (one player at a time)
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -126,6 +127,7 @@ export default function Create() {
         imageUrl: c.url, length, universe: c.universe, headline: c.headline,
         motion: motion.trim().length >= 3 ? motion.trim() : undefined,
       });
+      setReplay(null);
       setVideo(r.url);
     } catch (e) {
       explain(e);
@@ -314,13 +316,28 @@ export default function Create() {
 
         <View style={{ marginTop: 36 }}>
           <Text style={s.h2}>{t.recent}</Text>
+          {replay && !video && (
+            <View style={{ marginBottom: 14 }}>
+              <Clip url={replay} />
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+                <Button label={t.save} kind="ghost" onPress={() => save(replay, 'video')} style={{ flex: 1 }} />
+                <Button label={t.back} kind="ghost" onPress={() => setReplay(null)} style={{ flex: 1 }} />
+              </View>
+            </View>
+          )}
           {ses.history.length === 0 ? (
             <Text style={s.hint}>{t.empty}</Text>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
               {ses.history.map((h, k) => (
                 <View key={k} style={[thumb, { width: 150, height: 267, borderColor: universe(h.universe as UniverseId).color }]}>
-                  {h.kind === 'video' ? <Clip url={h.url} small /> : (
+                  {h.kind === 'video' ? (
+                    // No player per tile: several decoding at once crashed Expo Go on Android (7 Nov rehearsal).
+                    <Pressable style={videoTile} onPress={() => { setVideo(null); setReplay(h.url); }} accessibilityRole="button"
+                      accessibilityLabel="Play video">
+                      <Text style={{ fontFamily: F.display, color: C.lime, fontSize: 40 }}>▶</Text>
+                    </Pressable>
+                  ) : (
                     <Pressable style={{ flex: 1 }} onPress={() => save(h.url, 'image')}>
                       <Image source={{ uri: h.url }} style={{ flex: 1, borderRadius: 10 }} resizeMode="cover" />
                     </Pressable>
@@ -361,6 +378,9 @@ const input = {
 };
 const box = { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: C.dust };
 const thumb = { width: 120, height: 214, borderRadius: 14, backgroundColor: C.deep, padding: 4 };
+const videoTile = {
+  flex: 1, borderRadius: 10, backgroundColor: C.plum, alignItems: 'center' as const, justifyContent: 'center' as const,
+};
 const overlay = {
   position: 'absolute' as const, left: 0, right: 0, bottom: 0, padding: 16,
   backgroundColor: 'rgba(18,11,31,0.72)',
