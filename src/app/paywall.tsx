@@ -6,7 +6,7 @@ import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import type { PurchasesPackage } from 'react-native-purchases';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button, Header, s } from '@/components/ui';
+import { Button, Header, RevenueCatBadge, s } from '@/components/ui';
 import { useT } from '@/lib/i18n';
 import { buy, loadPackages, useSession, type Tier } from '@/lib/session';
 import { C, F } from '@/lib/theme';
@@ -38,7 +38,7 @@ export default function Paywall() {
     setMsg(null);
     try {
       const kind = await buy(pkg);
-      setMsg(kind === 'topup' ? t.toppedUp : t.purchased);
+      setMsg(`${kind === 'topup' ? t.toppedUp : t.purchased} ${t.verifiedBy(ses.userId ?? '')}`);
     } catch (e) {
       const err = e as { userCancelled?: boolean; message?: string };
       setMsg(err.userCancelled ? t.cancelled : String(err.message));
@@ -56,7 +56,10 @@ export default function Paywall() {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
         <Header />
         <Text style={s.h1}>{t.paywallTitle}</Text>
-        <Text style={[s.hint, { marginTop: 8, marginBottom: 20 }]}>{t.paywallBody}</Text>
+        <Text style={[s.hint, { marginTop: 8, marginBottom: 14 }]}>{t.paywallBody}</Text>
+        <View style={{ marginBottom: 16 }}>
+          <RevenueCatBadge customer={ses.rcReady ? ses.userId : null} />
+        </View>
 
         {PLANS.map((p) => {
           const current = ses.tier === p.tier;

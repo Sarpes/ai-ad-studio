@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BeforeAfter, Button, Chip, Header, s, Section } from '@/components/ui';
+import { BeforeAfter, Button, Chip, FalLoading, Header, s, Section } from '@/components/ui';
 import { useT } from '@/lib/i18n';
 import { pickPhoto, saveMedia, type Photo } from '@/lib/media';
 import { api, ApiError, logout, refresh, useSession } from '@/lib/session';
@@ -227,10 +227,7 @@ export default function Create() {
         )}
 
         {step === 'running' && (
-          <View style={{ paddingVertical: 80, alignItems: 'center' }}>
-            <Text style={[s.h1, { textAlign: 'center' }]}>{t.loading}</Text>
-            <Text style={[s.mono, { marginTop: 14 }]}>{ideas.map((i) => universe(i.universe).name.toUpperCase()).join('  ·  ')}</Text>
-          </View>
+          <FalLoading title={t.loading} detail={ideas.map((i) => universe(i.universe).name.toUpperCase()).join('  ·  ')} />
         )}
 
         {step === 'results' && (
@@ -273,7 +270,7 @@ export default function Create() {
                     onPress={() => makeVideo('short')} style={{ marginBottom: 8 }} />
                   <Button label={t.videoPremium} kind="secondary" busy={videoBusy === 'premium'} disabled={videoBusy !== null}
                     onPress={() => makeVideo('premium')} />
-                  {videoBusy && <Text style={[s.hint, { marginTop: 10 }]}>{t.videoWait}</Text>}
+                  {videoBusy && <FalLoading title={t.videoWait} detail={videoBusy === 'premium' ? '10 S · 9:16' : '5 S · 9:16'} />}
                   {video && (
                     <View style={{ marginTop: 12 }}>
                       <Clip url={video} />
@@ -282,6 +279,9 @@ export default function Create() {
                   )}
                 </Section>
               </>
+            )}
+            {ses.tier === 'free' && (
+              <Button label={t.upgrade} kind="secondary" onPress={() => router.push('/paywall')} style={{ marginBottom: 10 }} />
             )}
             <Button label={t.newRun} onPress={() => { setStep('compose'); setCards([]); setVideo(null); }} />
           </>

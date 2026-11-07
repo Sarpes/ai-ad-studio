@@ -108,6 +108,34 @@ export function Section({ title, hint, children }: { title: string; hint?: strin
   );
 }
 
+/** Loading state while fal.ai generates (images ~20-30 s, video ~110 s). Shows the fal logo on purpose. */
+export function FalLoading({ title, detail }: { title: string; detail?: string }) {
+  return (
+    <View style={{ alignItems: 'center', paddingVertical: 36 }}>
+      <Image source={require('../../assets/brands/fal.png')} style={{ width: 72, height: 72, borderRadius: 18 }} />
+      <ActivityIndicator color={C.lilac} style={{ marginTop: 18 }} />
+      <Text style={[s.h2, { textAlign: 'center', marginTop: 14 }]}>{title}</Text>
+      {detail && <Text style={[s.mono, { textAlign: 'center', marginTop: 6 }]}>{detail}</Text>}
+      <Text style={[s.mono, { marginTop: 10, color: C.star }]}>GENERATED WITH FAL.AI</Text>
+    </View>
+  );
+}
+
+/** Payments badge: makes the RevenueCat infrastructure visible on the paywall. */
+export function RevenueCatBadge({ customer }: { customer?: string | null }) {
+  return (
+    <View style={[s.card, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }]}>
+      <Image source={require('../../assets/brands/revenuecat.png')} style={{ width: 36, height: 36, borderRadius: 8 }} />
+      <View style={{ flex: 1 }}>
+        <Text style={[s.body, { fontFamily: F.bodyBold }]}>Payments by RevenueCat</Text>
+        <Text style={s.mono}>
+          {customer ? `CUSTOMER · ${customer.toUpperCase()}` : 'SUBSCRIPTIONS · CREDITS · TEST STORE'}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 /** Drag the handle to compare the plain photo (left) with the ad (right). */
 export function BeforeAfter({ before, after, height = 420 }: { before: string; after: string; height?: number }) {
   const [w, setW] = useState(0);
