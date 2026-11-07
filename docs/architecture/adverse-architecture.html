@@ -78,7 +78,7 @@ flowchart TD
   R -->|Free user| U["Upgrade · remove watermark"]
   U --> P
   R --> V["Make it move<br/>write what happens<br/>Short 5 s · Premium 10 s"]
-  V --> L2["Loading screen<br/>fal.ai logo, ~110 s"]
+  V --> L2["Loading screen<br/>fal.ai logo, ~20-60 s"]
   L2 --> W["Video plays<br/>Save · appears in Your recent ads"]
     </pre></div>
     <div class="table-wrap"><table>
@@ -181,8 +181,8 @@ sequenceDiagram
   Note over Server: Free → resize 720 px + "Made with AdVerse"<br/>charge only delivered images
   Server-->>Phone: cards
   Phone->>Server: POST /api/video (image, length, "what happens")
-  Server->>Fal: kling-video 2.5 turbo · 5 s or 10 s
-  Fal-->>Server: mp4 (~110 s for 10 s)
+  Server->>Fal: minimax h3-max · 5 s or 10 s
+  Fal-->>Server: mp4 (5 s clip in ~16 s)
   Server-->>Phone: video URL
   opt only when RC_SECRET_KEY is set
     Server->>RC: REST v2 · active_entitlements, virtual_currencies, transactions
@@ -192,7 +192,7 @@ sequenceDiagram
       <div class="box ext-fal"><h3>fal.ai</h3><ul>
         <li><code>fal-ai/any-llm</code> · Director ideas · ~$0.001</li>
         <li><code>fal-ai/nano-banana/edit</code> · images · $0.0398 each</li>
-        <li><code>kling-video/v2.5-turbo/pro/image-to-video</code> · $0.07 / s</li>
+        <li><code>minimax/h3-max/image-to-video</code> · $0.035 / s</li>
         <li>Key: <code>FAL_KEY</code>, server only</li>
       </ul></div>
       <div class="box ext-rc"><h3>RevenueCat</h3><ul>

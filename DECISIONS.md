@@ -51,7 +51,7 @@ Sources: `AI_Ad_Studio_Tam_Is_Plani_ve_Uygulama_Sureci.pdf` (plan), `AdVerse_Bra
 ### D6. fal models
 - **Context:** plan p.15 names packaging drift as the top risk; brand kit wants 9:16.
 - **Options considered:** image `nano-banana/edit` ($0.0398) vs `nano-banana-2/edit` ($0.08); video Kling 2.5 turbo ($0.07/s, 5 or 10 s) vs Kling 3 standard ($0.14/s); Director `any-llm`.
-- **Chosen:** `fal-ai/nano-banana/edit`, `fal-ai/kling-video/v2.5-turbo/pro/image-to-video`, `fal-ai/any-llm` (Gemini 2.5 Flash) with template fallback.
+- **Chosen:** `fal-ai/nano-banana/edit`, `fal-ai/any-llm` (Gemini 2.5 Flash) with template fallback, and for video **`minimax/h3-max/image-to-video`** (team decision 7 Nov, replaces Kling 2.5 turbo): $0.035/s, any length up to 15 s, 768P, `prompt_expansion_mode: disabled` so the user's approved "what happens" text is sent unchanged. Measured: 5 s clip in 16 s via `scripts/check-video.mjs` (Kling: 10 s clip in 109 s). Kling stays selectable with `FAL_VIDEO_MODEL`.
 - **Why:** cheapest models that take the product photo as input and give exactly 5 s / 10 s; measured a 10 s clip in 109 s.
 - **Rejected:** the pricier variants until the side-by-side test on real product photos.
 - **Cost / trade-off:** nano-banana sometimes returns `no_media_generated` (4 of 6 calls on fal's sample photo); one automatic retry, and only delivered images are charged.

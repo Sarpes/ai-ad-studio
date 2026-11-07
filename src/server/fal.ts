@@ -3,7 +3,8 @@ import { fal } from '@fal-ai/client';
 import sharp from 'sharp';
 
 export const IMAGE_MODEL = process.env.FAL_IMAGE_MODEL ?? 'fal-ai/nano-banana/edit';
-export const VIDEO_MODEL = process.env.FAL_VIDEO_MODEL ?? 'fal-ai/kling-video/v2.5-turbo/pro/image-to-video';
+// Video: MiniMax H3 Max (team decision, 7 Nov). $0.035/s, any length up to 15 s, image as first frame.
+export const VIDEO_MODEL = process.env.FAL_VIDEO_MODEL ?? 'minimax/h3-max/image-to-video';
 export const LLM_MODEL = 'fal-ai/any-llm';
 
 // Cost guard: no identity check on the venue Wi-Fi beyond the login name, so cap total spend per run.
@@ -48,9 +49,18 @@ export async function editImage(prompt: string, imageUrls: string[], attempts = 
 
 export async function makeVideo(imageUrl: string, prompt: string, seconds: '5' | '10'): Promise<string> {
   ensureFal();
-  const r = await fal.subscribe(VIDEO_MODEL, {
-    input: { image_url: imageUrl, prompt, duration: seconds },
-  });
+  // Input shapes differ per model: H3 takes a number and needs prompt_expansion_mode; Kling takes "5"/"10".
+  const input = VIDEO_MODEL.startsWith('minimax/')
+    ? {
+        image_url: imageUrl,
+        prompt,
+        duration: Number(seconds),
+        resolution: '768P',
+        // 'disabled': send the user's approved "what happens" text as written, no AI rewrite (human in the loop).
+        prompt_expansion_mode: 'disabled',
+      }
+    : { image_url: imageUrl, prompt, duration: seconds };
+  const r = await fal.subscribe(VIDEO_MODEL, { input });
   const url = (r.data as { video?: { url: string } })?.video?.url;
   if (!url) throw new Error('No video returned');
   return url;
