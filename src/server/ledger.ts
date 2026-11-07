@@ -16,8 +16,16 @@ export type HistoryItem = {
   headline?: string;
   caption?: string;
   watermarked?: boolean;
+  rawUrl?: string; // clean original of a watermarked image; server-only, never returned to the app
   createdAt: string;
 };
+
+/** For a paid user animating an image they made while free: use the clean original. */
+export function cleanSource(userId: string, url: string): string {
+  const db = load();
+  const h = db[userId]?.history.find((x) => x.url === url);
+  return h?.rawUrl ?? url;
+}
 
 type Account = {
   createdAt: string;
@@ -95,7 +103,7 @@ export async function getAccount(userId: string, tier: Tier) {
     a.grantedTiers.push(tier);
   }
   save(db);
-  return { userId, tier, credits: await paidBalance(userId, a), ...freeState(a), history: a.history.slice(-20).reverse() };
+  return { userId, tier, credits: await paidBalance(userId, a), ...freeState(a), history: a.history.slice(-20).reverse().map(({ rawUrl: _raw, ...h }) => h) };
 }
 
 export class OutOfCredits extends Error {}

@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { makeVideo } from '@/server/fal';
 import { fail, parse, UserBody } from '@/server/http';
-import { assertCanAfford, charge, OutOfCredits, remember, resolveTier } from '@/server/ledger';
+import { assertCanAfford, charge, cleanSource, OutOfCredits, remember, resolveTier } from '@/server/ledger';
 
 const Body = UserBody.extend({
   imageUrl: z.string().url(),
@@ -26,7 +26,8 @@ export async function POST(req: Request) {
     const cost = b.length === 'premium' ? 10 : 5;
     await assertCanAfford(b.userId, tier, cost, 'video');
 
-    const url = await makeVideo(b.imageUrl, MOTION, b.length === 'premium' ? '10' : '5');
+    // Paid users get a clean video even from an image they made while on Free (no watermark baked in).
+    const url = await makeVideo(cleanSource(b.userId, b.imageUrl), MOTION, b.length === 'premium' ? '10' : '5');
     await charge(b.userId, tier, cost);
     remember(b.userId, [
       { kind: 'video', url, universe: b.universe, headline: b.headline, createdAt: new Date().toISOString() },

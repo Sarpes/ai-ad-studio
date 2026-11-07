@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const results = await Promise.allSettled(
       b.ideas.map(async (idea) => {
         const raw = await editImage(imagePrompt(idea.scene), [productUrl]);
-        return tier === 'free' ? watermark(raw) : raw;
+        return { url: tier === 'free' ? await watermark(raw) : raw, raw };
       }),
     );
 
@@ -37,18 +37,23 @@ export async function POST(req: Request) {
         universe: idea.universe,
         headline: idea.headline,
         caption: idea.caption,
-        url: r.status === 'fulfilled' ? r.value : null,
+        url: r.status === 'fulfilled' ? r.value.url : null,
         watermarked: tier === 'free',
       };
     });
+    const raws = results.map((r) => (r.status === 'fulfilled' ? r.value.raw : undefined));
     const ok = cards.filter((c) => c.url);
     await charge(b.userId, tier, ok.length);
     remember(
       b.userId,
-      ok.map((c) => ({
-        kind: 'image' as const, url: c.url!, universe: c.universe, headline: c.headline, caption: c.caption,
-        watermarked: c.watermarked, createdAt: new Date().toISOString(),
-      })),
+      cards.flatMap((c, i) =>
+        c.url
+          ? [{
+              kind: 'image' as const, url: c.url, universe: c.universe, headline: c.headline, caption: c.caption,
+              watermarked: c.watermarked, rawUrl: c.watermarked ? raws[i] : undefined, createdAt: new Date().toISOString(),
+            }]
+          : [],
+      ),
     );
     results.forEach(
       (r) =>

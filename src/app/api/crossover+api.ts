@@ -32,7 +32,9 @@ export async function POST(req: Request) {
     const url = tier === 'free' ? await watermark(raw) : raw;
     await charge(b.userId, tier, 1);
     const card = { universe: 'glow', headline: b.headline, caption: b.caption, url, watermarked: tier === 'free' };
-    remember(b.userId, [{ kind: 'image', ...card, createdAt: new Date().toISOString() }]);
+    remember(b.userId, [
+      { kind: 'image', ...card, rawUrl: tier === 'free' ? raw : undefined, createdAt: new Date().toISOString() },
+    ]);
     return Response.json({ tier, charged: 1, cards: [card], productUrl });
   } catch (e) {
     return fail(e);
