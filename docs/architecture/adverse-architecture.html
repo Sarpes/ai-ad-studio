@@ -1,0 +1,212 @@
+<title>AdVerse Architecture</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Inter:wght@400;600&family=Space+Mono&display=swap">
+<style>
+/* Layout: one reading column; each section = short explanation + one diagram; dark-first, AdVerse brand kit palette */
+:root {
+  color-scheme: dark;
+  --void: #120B1F; --deep: #1E1433; --plum: #2E1F4D; --line: #3D2C63;
+  --lilac: #B48CFF; --lime: #C8FF3D; --star: #F4F0FF; --dust: #A79CC2;
+  --fal: #EC0648; --rc: #F25A5A;
+  --display: "Unbounded", "Arial Black", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Space Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  color-scheme: light; --void: #F7F4FF; --deep: #FFFFFF; --plum: #EEE7FF; --line: #D9CCF5;
+  --lilac: #6B3FD4; --lime: #3F6B00; --star: #1A1030; --dust: #5D5280; --fal: #C4003A; --rc: #C93A3A;
+} }
+:root[data-theme="light"] {
+  color-scheme: light; --void: #F7F4FF; --deep: #FFFFFF; --plum: #EEE7FF; --line: #D9CCF5;
+  --lilac: #6B3FD4; --lime: #3F6B00; --star: #1A1030; --dust: #5D5280; --fal: #C4003A; --rc: #C93A3A;
+}
+body { background: var(--void); color: var(--star); font-family: var(--body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width: 920px; margin: 0 auto; padding-block: 40px 64px; display: grid; gap: 44px; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 6vw, 46px); line-height: 1.08; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+h1 .v { color: var(--lilac); }
+h2 { font-family: var(--display); font-weight: 600; font-size: 22px; margin: 0 0 8px; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--dust); font-size: 17px; margin-top: 12px; }
+.tag { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dust); }
+section { display: grid; gap: 14px; }
+.diagram { background: var(--deep); border: 1px solid var(--line); border-radius: 18px; padding: 18px; overflow-x: auto; }
+.diagram pre.mermaid { margin: 0; min-width: 640px; background: transparent; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.box { background: var(--deep); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.box h3 { margin: 0 0 6px; font-size: 15px; font-weight: 600; }
+.box ul { margin: 0; padding-left: 18px; color: var(--dust); }
+.box code, td code, p code { font-family: var(--mono); font-size: 12.5px; color: var(--star); background: var(--plum); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+.ext-fal { border-top: 3px solid var(--fal); }
+.ext-rc { border-top: 3px solid var(--rc); }
+.ext-tun { border-top: 3px solid var(--lilac); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dust); font-weight: 400; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { color: var(--dust); font-size: 14px; }
+.warn { border-left: 3px solid var(--lime); padding-left: 12px; }
+</style>
+
+<main>
+  <header>
+    <div class="tag">Ad<span style="color:var(--lilac)">V</span>erse · Third Room AI Hackathon · 7 Nov 2026</div>
+    <h1>How Ad<span class="v">V</span>erse works</h1>
+    <p class="lede">One product photo becomes ads for up to three audiences ("universes"). This page shows the user's path through the app, how the code is organised, and every call that leaves the server.</p>
+  </header>
+
+  <section>
+    <div class="tag">1 · User flow</div>
+    <h2>From login to a finished video</h2>
+    <p>The name typed at login is the account: it becomes the RevenueCat customer ID. Nothing is charged until the user approves the ideas, and only images that actually come back cost credits.</p>
+    <div class="diagram"><pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#2E1F4D','primaryTextColor':'#F4F0FF','primaryBorderColor':'#B48CFF','lineColor':'#A79CC2','secondaryColor':'#1E1433','tertiaryColor':'#1E1433','fontFamily':'Inter, sans-serif','fontSize':'14px'}}}%%
+flowchart TD
+  A["Login<br/>type a name, e.g. A Lab Study Club"] --> B["Plans screen<br/>Free · Creator · Studio · Top-up"]
+  B -->|Continue with Free| C["Your product<br/>photo + what is it?"]
+  B -->|Subscribe| P["RevenueCat Test Store<br/>purchase window"]
+  P --> C
+  C --> X{"Crossover?<br/>add a person photo<br/>+ consent box"}
+  X -->|no| M["Mode<br/>Director · Pick universes · Write my idea<br/>How many: 1 · 2 · 3"]
+  X -->|yes| I
+  M --> I["Check the ideas<br/>edit headline, caption<br/>and the prompt sent to fal.ai"]
+  I -->|Open Multiverse| L["Loading screen<br/>fal.ai logo"]
+  L --> R["Results<br/>1-3 universe cards<br/>Free: watermark, 720 px"]
+  R --> S["Save / Before-after"]
+  R -->|Free user| U["Upgrade · remove watermark"]
+  U --> P
+  R --> V["Make it move<br/>write what happens<br/>Short 5 s · Premium 10 s"]
+  V --> L2["Loading screen<br/>fal.ai logo, ~110 s"]
+  L2 --> W["Video plays<br/>Save · appears in Your recent ads"]
+    </pre></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Plan</th><th>Price</th><th>What it unlocks</th><th>Credits</th></tr></thead>
+      <tbody>
+        <tr><td>Free</td><td class="num">$0</td><td>3 images a week for the first 30 days · watermark · no video</td><td class="num">—</td></tr>
+        <tr><td>Creator</td><td class="num">$12.99 / month</td><td>No watermark · HD · short video</td><td class="num">40 / month</td></tr>
+        <tr><td>Studio</td><td class="num">$29.99 / month</td><td>Everything in Creator · premium 10 s video</td><td class="num">100 / month</td></tr>
+        <tr><td>Top-up</td><td class="num">$4.99 once</td><td>Extra credits on any paid plan</td><td class="num">+10</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Costs: 1 credit per image (a 3-universe Multiverse = 3), Crossover 1, short video 5, premium video 10.</p>
+  </section>
+
+  <section>
+    <div class="tag">2 · Codebase</div>
+    <h2>One Expo project: app and server together</h2>
+    <p>The phone (Expo Go) and the browser run the same React Native code. Files ending in <code>+api.ts</code> are server routes inside the same project, so the fal key never ships in the app.</p>
+    <div class="diagram"><pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#2E1F4D','primaryTextColor':'#F4F0FF','primaryBorderColor':'#B48CFF','lineColor':'#A79CC2','secondaryColor':'#1E1433','tertiaryColor':'#1E1433','clusterBkg':'#1E1433','clusterBorder':'#3D2C63','fontFamily':'Inter, sans-serif','fontSize':'13px'}}}%%
+flowchart LR
+  subgraph APP["App · runs on phone and web"]
+    direction TB
+    a1["app/index.tsx<br/>login"]
+    a2["app/paywall.tsx<br/>plans + RevenueCat badge"]
+    a3["app/create.tsx<br/>whole creative flow"]
+    c1["components/ui.tsx<br/>logo, buttons, fal loading,<br/>before/after slider"]
+    l1["lib/session.ts<br/>login, plan, credits, API calls"]
+    l2["lib/i18n.ts<br/>EN / TR copy"]
+    l3["lib/universes.ts<br/>6 universes + prompt rules"]
+  end
+  subgraph API["Server routes · src/app/api"]
+    direction TB
+    r1["director+api.ts<br/>ideas + prompts"]
+    r2["multiverse+api.ts<br/>1-3 images"]
+    r3["crossover+api.ts<br/>product + person"]
+    r4["video+api.ts<br/>5 s / 10 s clip"]
+    r5["account+api.ts<br/>balance, free counter, history"]
+  end
+  subgraph SRV["Server helpers · src/server"]
+    direction TB
+    s1["fal.ts<br/>fal calls, retry, watermark"]
+    s2["ledger.ts<br/>free tier, credits, history"]
+    s3["revenuecat.ts<br/>REST v2 (optional)"]
+    s4["http.ts<br/>validation, error codes"]
+    d1[("data/ledger.json")]
+  end
+  a1 --> l1
+  a2 --> l1
+  a3 --> l1
+  a3 --> c1
+  l1 -->|POST JSON| API
+  API --> s4
+  API --> s1
+  API --> s2
+  s2 --> s3
+  s2 --> d1
+  r1 -.-> l3
+  r2 -.-> l3
+    </pre></div>
+    <div class="grid2">
+      <div class="box"><h3>Safety rules in code</h3><ul>
+        <li>Every image and video prompt gets the fixed rule: keep the product exactly as photographed, no text or claims.</li>
+        <li>Free images are watermarked on the server with <code>sharp</code>, so a download keeps the mark.</li>
+        <li>The clean original of a free image stays on the server; after an upgrade the video uses it.</li>
+      </ul></div>
+      <div class="box"><h3>Money rules in code</h3><ul>
+        <li>Credits are checked before calling fal and charged only for delivered images.</li>
+        <li>An unverifiable plan counts as Free, unless <code>ALLOW_INSECURE_DEMO=1</code> (demo laptop only).</li>
+        <li><code>FAL_MAX_JOBS</code> caps fal jobs per server run (40 for the demo).</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="tag">3 · External communication</div>
+    <h2>Every call that leaves the server</h2>
+    <p>Three outside services. The app talks to RevenueCat directly for purchases; everything that costs money at fal.ai goes through our server.</p>
+    <div class="diagram"><pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'actorBkg':'#2E1F4D','actorTextColor':'#F4F0FF','actorBorder':'#B48CFF','signalColor':'#A79CC2','signalTextColor':'#F4F0FF','noteBkgColor':'#1E1433','noteTextColor':'#F4F0FF','noteBorderColor':'#3D2C63','labelBoxBkgColor':'#1E1433','labelTextColor':'#F4F0FF','loopTextColor':'#F4F0FF','fontFamily':'Inter, sans-serif','fontSize':'13px'}}}%%
+sequenceDiagram
+  participant Phone as Phone (Expo Go) / Browser
+  participant Tunnel as ngrok tunnel (exp.direct)
+  participant Server as AdVerse server (home PC)
+  participant RC as RevenueCat
+  participant Fal as fal.ai
+  Phone->>RC: Purchases.logIn(name) · getOfferings()
+  RC-->>Phone: customer, plan (entitlements), prices
+  Phone->>RC: purchasePackage(Studio) · Test Store window
+  RC-->>Phone: Studio active · 100 credits granted (CRD)
+  Phone->>Tunnel: POST /api/director (mode, count, language)
+  Tunnel->>Server: forward
+  Server->>Fal: any-llm (Gemini 2.5 Flash) · writes ideas as JSON
+  Fal-->>Server: headlines, captions, scenes
+  Server-->>Phone: ideas (user edits, then approves)
+  Phone->>Server: POST /api/multiverse (photo + approved prompts)
+  Server->>Fal: storage.upload(photo)
+  Server->>Fal: nano-banana/edit × 1-3 in parallel (retry once)
+  Fal-->>Server: images
+  Note over Server: Free → resize 720 px + "Made with AdVerse"<br/>charge only delivered images
+  Server-->>Phone: cards
+  Phone->>Server: POST /api/video (image, length, "what happens")
+  Server->>Fal: kling-video 2.5 turbo · 5 s or 10 s
+  Fal-->>Server: mp4 (~110 s for 10 s)
+  Server-->>Phone: video URL
+  opt only when RC_SECRET_KEY is set
+    Server->>RC: REST v2 · active_entitlements, virtual_currencies, transactions
+  end
+    </pre></div>
+    <div class="grid2">
+      <div class="box ext-fal"><h3>fal.ai</h3><ul>
+        <li><code>fal-ai/any-llm</code> · Director ideas · ~$0.001</li>
+        <li><code>fal-ai/nano-banana/edit</code> · images · $0.0398 each</li>
+        <li><code>kling-video/v2.5-turbo/pro/image-to-video</code> · $0.07 / s</li>
+        <li>Key: <code>FAL_KEY</code>, server only</li>
+      </ul></div>
+      <div class="box ext-rc"><h3>RevenueCat</h3><ul>
+        <li>Project "Poof", Test Store app</li>
+        <li>Products: <code>adverse_creator_monthly</code>, <code>adverse_studio_monthly</code>, <code>adverse_topup_10</code></li>
+        <li>Entitlements <code>creator</code>, <code>studio</code> · offering <code>adverse_tiers</code> · currency <code>CRD</code></li>
+        <li>Test Store "month" = 5 minutes, renews 5 times</li>
+      </ul></div>
+      <div class="box ext-tun"><h3>Tunnel (ngrok via Expo)</h3><ul>
+        <li>The server runs on the home PC; the phone at the venue reaches it through a public <code>*.exp.direct</code> address.</li>
+        <li>The address changes on every restart.</li>
+        <li>Open only during the demo; stop it afterwards.</li>
+      </ul></div>
+    </div>
+    <p class="note warn">Known gaps (see DECISIONS.md): no real user accounts yet; without a RevenueCat secret key the server trusts the app's plan on the demo laptop; live updates do not reach the phone through the tunnel, so reload Expo Go after every change.</p>
+  </section>
+</main>
