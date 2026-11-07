@@ -109,7 +109,7 @@ export default function Paywall() {
         {msg && <Text style={[s.body, { marginTop: 12 }]}>{msg}</Text>}
 
         <Button
-          label={onboarding ? t.continueFree : t.back}
+          label={onboarding ? (ses.tier === 'free' ? t.continueFree : t.loginCta) : t.back}
           kind="ghost"
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/create'))}
           style={{ marginTop: 18 }}

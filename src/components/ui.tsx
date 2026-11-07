@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator, Image, PanResponder, Pressable, StyleSheet, Text, View, type ViewStyle,
 } from 'react-native';
@@ -12,17 +12,19 @@ import { C, F } from '@/lib/theme';
 /** Brand kit logo A "Portal V": Ad + gradient V (lilac -> lime) + erse. */
 export function Wordmark({ size = 28 }: { size?: number }) {
   const v = size * 0.82;
+  // Unique gradient id: on web, two mounted screens with the same SVG id hide one V.
+  const gid = `v${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', flexShrink: 0 }} accessibilityLabel="AdVerse">
       <Text style={[s.word, { fontSize: size }]}>Ad</Text>
       <Svg width={v * 0.9} height={v} viewBox="0 0 90 100" style={{ marginBottom: size * 0.12, marginHorizontal: 1, flexShrink: 0 }}>
         <Defs>
-          <LinearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+          <LinearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={C.lilac} />
             <Stop offset="1" stopColor={C.lime} />
           </LinearGradient>
         </Defs>
-        <Path d="M10 8 L45 92 L80 8" stroke="url(#g)" strokeWidth={17} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <Path d="M10 8 L45 92 L80 8" stroke={`url(#${gid})`} strokeWidth={17} strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </Svg>
       <Text style={[s.word, { fontSize: size }]}>erse</Text>
     </View>
