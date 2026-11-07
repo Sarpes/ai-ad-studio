@@ -45,7 +45,7 @@ Sources: `AI_Ad_Studio_Tam_Is_Plani_ve_Uygulama_Sureci.pdf` (plan), `AdVerse_Bra
 - **Chosen:** Virtual Currency CRD (Creator 40 and Studio 100 expire at cycle end; top-up 10). The server spends via REST v2 only when `RC_SECRET_KEY` is set; otherwise `data/ledger.json` holds the balance.
 - **Why:** RevenueCat becomes the source of truth with no code change once the secret key exists.
 - **Rejected:** on-device balance (anyone can bypass it).
-- **Cost / trade-off:** without the secret key the server trusts the app's tier claim; the fal spend cap `FAL_MAX_JOBS` (default 120) bounds the damage on the venue Wi-Fi.
+- **Cost / trade-off:** without the secret key the server can only trust the app's tier claim, and it does so **only when `ALLOW_INSECURE_DEMO=1`** (set in the local demo `.env`; off by default, so a fresh deploy fails closed to Free). The fal spend cap `FAL_MAX_JOBS` (default 120) bounds the damage on the venue Wi-Fi.
 - **What would make you change it:** setting `RC_SECRET_KEY` (switches automatically).
 
 ### D6. fal models
