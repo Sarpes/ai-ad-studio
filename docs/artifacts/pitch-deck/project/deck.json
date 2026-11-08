@@ -1,0 +1,18 @@
+{
+  "v": 4,
+  "createdOnFiles": { "v": 1, "at": "2026-11-07T16:09:58Z" },
+  "lists": "css",
+  "title": "AdVerse Pitch",
+  "order": ["cover", "problem", "solution", "demo", "money", "renew", "next"],
+  "sections": {
+    "open": { "description": "Who we are and the everyday problem we solve.", "start": "cover" },
+    "product": { "description": "How AdVerse works, shown live on the phone.", "start": "solution" },
+    "business": { "description": "Plans, unit economics and why people renew.", "start": "money" },
+    "close": { "description": "What we build next and the closing line.", "start": "next" }
+  },
+  "faces": {
+    "unbounded": { "family": "Unbounded", "href": "https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&display=swap" },
+    "inter": { "family": "Inter", "href": "https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" },
+    "space-mono": { "family": "Space Mono", "href": "https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" }
+  }
+}
